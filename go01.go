@@ -16,7 +16,7 @@ var (
 	SuccessfulMessages  int
 )
 
-func NotifyClient(clientUrl string, messages []string) Response {
+func NotifyClient(clientUrl string, messages []string, duration time.Duration) Response {
 	// split messages into chunks and send via goroutine
 	messageChunks := ChunkSlice(messages, 20)
 
@@ -25,7 +25,7 @@ func NotifyClient(clientUrl string, messages []string) Response {
 	for i, messageChunk := range messageChunks {
 		fmt.Println("Starting notification worker : ", i+1)
 		wg.Add(1)
-		go SendHttpNotification(clientUrl, messageChunk, &wg)
+		go SendHttpNotification(clientUrl, messageChunk, &wg, duration)
 	}
 
 	wg.Wait()
@@ -35,7 +35,7 @@ func NotifyClient(clientUrl string, messages []string) Response {
 		FailedMessagesCount:     len(FailedMessagesQueue)}
 }
 
-func SendHttpNotification(client string, messages []string, wg *sync.WaitGroup) {
+func SendHttpNotification(client string, messages []string, wg *sync.WaitGroup, duration time.Duration) {
 	// loop message and send request
 	defer wg.Done()
 
@@ -78,6 +78,8 @@ func SendHttpNotification(client string, messages []string, wg *sync.WaitGroup) 
 				}
 			}
 		}(client, message)
+
+		time.Sleep(duration) // duration
 	}
 	time.Sleep(time.Second) // some time to clear goroutines
 	reqWg.Wait()
