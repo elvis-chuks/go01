@@ -9,6 +9,9 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/jwalton/gchalk"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var (
@@ -45,7 +48,7 @@ func SendHttpNotification(client string, messages []string, wg *sync.WaitGroup, 
 		// create request body
 
 		reqBody := RequestBody{
-			Id:      "",
+			Id:      primitive.NewObjectID().Hex(),
 			Message: message,
 		}
 
@@ -73,8 +76,10 @@ func SendHttpNotification(client string, messages []string, wg *sync.WaitGroup, 
 						Id:      reqBody.Id,
 						Error:   errors.New(resp.Status),
 					})
+					log.Println(gchalk.Red(fmt.Sprintf("Request id : %s", resp.Status)))
 				} else {
 					SuccessfulMessages += 1
+					log.Println(gchalk.Green(fmt.Sprintf("Request id : %s", resp.Status)))
 				}
 			}
 		}(client, message)
